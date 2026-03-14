@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Profile – CSRF Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #f0f2f5; padding: 2rem; }
+    .container { max-width: 520px; margin: auto; }
+    h2 { margin-bottom: 1.5rem; color: #333; }
+    .card { background: #fff; padding: 1.8rem; border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.1); margin-bottom: 1.5rem; }
+    .info-row { display: flex; justify-content: space-between;
+                padding: .5rem 0; border-bottom: 1px solid #f0f0f0; font-size: .95rem; }
+    .info-row:last-child { border-bottom: none; }
+    .label { color: #888; }
+    label  { display: block; margin-bottom: .3rem; font-size: .85rem; color: #555; margin-top: .8rem; }
+    input, textarea {
+      width: 100%; padding: .6rem .8rem;
+      border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+    textarea { resize: vertical; height: 80px; }
+    button { margin-top: 1rem; padding: .6rem 1.4rem; background: #4f46e5;
+             color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: .95rem; }
+    button:hover { background: #4338ca; }
+    .logout { float: right; background: #ef4444; }
+    .logout:hover { background: #dc2626; }
+    #msg { margin-top: .8rem; font-size: .9rem; }
+    .success { color: green; }
+    .error   { color: red; }
+    .warn-box { background: #fff7ed; border: 1px solid #fb923c;
+                border-radius: 6px; padding: 1rem; font-size: .85rem; color: #92400e; }
+    .warn-box strong { display: block; margin-bottom: .3rem; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>👤 My Profile
+    <a href="/logout"><button class="logout" style="float:right">Logout</button></a>
+  </h2>
+
+  <!-- Current info (loaded via JS) -->
+  <div class="card" id="current-info">
+    <div class="info-row"><span class="label">Username</span><span id="disp-username">…</span></div>
+    <div class="info-row"><span class="label">Email</span>   <span id="disp-email">…</span></div>
+    <div class="info-row"><span class="label">Bio</span>     <span id="disp-bio">…</span></div>
+  </div>
+
+  <!-- Update form — ⚠️ NO CSRF TOKEN -->
+  <div class="card">
+    <h3 style="margin-bottom:.3rem">✏️ Update Profile</h3>
+    <p style="font-size:.8rem;color:#888;margin-bottom:.5rem">
+      ⚠️ This form has <strong>no CSRF token</strong> — it is intentionally vulnerable.
+    </p>
+
+    <form id="update-form">
+      <label>Email</label>
+      <input type="email" id="email" name="email" required />
+      <label>Bio</label>
+      <textarea id="bio" name="bio"></textarea>
+      <!-- ❌  No hidden CSRF token field here -->
+      <button type="submit">Save Changes</button>
+    </form>
+    <div id="msg"></div>
+  </div>
+
+  <div class="warn-box">
+    <strong>🔴 CSRF Demo Info</strong>
+    The <code>POST /profile/update</code> endpoint trusts any request that carries
+    a valid session cookie — it never checks where the request came from.
+    Open <code>attacker.html</code> (served from a different origin) while logged in
+    to see the attack in action.
+  </div>
+</div>
+
+<script>
+  // Load current profile data
+  fetch("/profile/data")
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById("disp-username").textContent = data.username;
+      document.getElementById("disp-email").textContent    = data.email;
+      document.getElementById("disp-bio").textContent      = data.bio;
+      document.getElementById("email").value = data.email;
+      document.getElementById("bio").value   = data.bio;
+    });
+
+  // Legitimate profile update
+  document.getElementById("update-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const body = new URLSearchParams({
+      email: document.getElementById("email").value,
+      bio:   document.getElementById("bio").value,
+    });
+    const res  = await fetch("/profile/update", { method: "POST", body });
+    const data = await res.json();
+    const msg  = document.getElementById("msg");
+    if (data.success) {
+      msg.className = "success";
+      msg.textContent = "✅ Profile updated successfully!";
+      document.getElementById("disp-email").textContent = data.email;
+      document.getElementById("disp-bio").textContent   = data.bio;
+    } else {
+      msg.className = "error";
+      msg.textContent = "❌ Update failed.";
+    }
+  });
+</script>
+</body>
+</html>

