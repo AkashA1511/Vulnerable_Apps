@@ -281,7 +281,8 @@ app.get("/profile/data", (req, res) => {
   res.json({ username: req.session.user, email: u.email, bio: u.bio, phone: u.phone });
 });
 
-// ── POST /profile/update  ← VULNERABLE (no CSRF token check) ─────────────────
+// ── POST /profile/update  
+// thisis vulnerable parameter we have to add csrf token ─────────────────
 app.post("/profile/update", (req, res) => {
   if (!req.session.user) return res.status(401).send("Not logged in");
   const u = users[req.session.user];
