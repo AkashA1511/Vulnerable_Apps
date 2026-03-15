@@ -3,6 +3,8 @@
 > A hands-on recreation of a real-world Cross-Site Request Forgery vulnerability found on a live target, triaged at **$700**, built from scratch to demonstrate the full attack lifecycle — discovery, exploitation, and patch.
 
 ---
+ **Video walkthrough:** [https://youtu.be/uynNuhTe39U](https://youtu.be/uynNuhTe39U)
+---
 
 ## 📋 Table of Contents
 
